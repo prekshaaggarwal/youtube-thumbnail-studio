@@ -35,7 +35,7 @@ def test_home_embedded_pro_ui(client):
     res = client.get("/")
     assert res.status_code == 200
     html = res.data.decode("utf-8")
-    assert "Thumbnail Studio Pro" in html
+    assert "Thumbnail Studio" in html
     assert 'id="ts-embedded-ui"' in html
     assert "data-ui-mode" in html and "embedded-css" in html
     assert ":root" in html
@@ -49,8 +49,8 @@ def test_studio_public_no_login_required(client):
     assert "Create your thumbnail" in html
     assert 'id="tsg-canvas"' in html
     assert 'id="tsg-embedded-css"' in html
-    assert 'id="tsg-embedded-js"' in html
-    assert "initThumbnailStudio" in html
+    assert 'script.id = "tsg-runtime-js"' in html
+    assert "/static/js/thumbnail-studio.js?ts=" in html
     assert 'src="/static/js/thumbnail-studio.js"' not in html
 
 
