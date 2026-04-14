@@ -53,10 +53,10 @@ If you see `ERR_CONNECTION_REFUSED`, the Flask process is not running—keep the
 ![Product walkthrough GIF](docs/screenshots/demo.gif)
 
 ### Key product views
-![Dashboard and workspace overview](assets/c__Users_hp_AppData_Roaming_Cursor_User_workspaceStorage_empty-window_images_image-d85347a5-9c53-4ed9-aec0-90b02ed3703a.png)
-![Create your thumbnail editor](assets/c__Users_hp_AppData_Roaming_Cursor_User_workspaceStorage_empty-window_images_image-5bf6a641-1e4c-4e4d-a810-796dd5b8f940.png)
-![A/B tester](assets/c__Users_hp_AppData_Roaming_Cursor_User_workspaceStorage_empty-window_images_image-a415c86c-7eda-4b8a-ba7f-30442ef812fb.png)
-![AI creator generated thumbnail](assets/c__Users_hp_AppData_Roaming_Cursor_User_workspaceStorage_empty-window_images_image-b0949d8e-792a-4dba-9be8-afa0d77abc73.png)
+![Dashboard and workspace overview](docs/screenshots/dashboard-overview.png)
+![Create your thumbnail editor](docs/screenshots/create-thumbnail-editor.png)
+![A/B tester](docs/screenshots/ab-test-result.png)
+![AI creator generated thumbnail](docs/screenshots/ai-creator-output.png)
 
 ---
 
