@@ -1,0 +1,10 @@
+google-api-python-client
+requests
+pandas
+numpy
+scikit-learn
+Pillow
+tqdm
+joblib
+Flask
+python-dotenv

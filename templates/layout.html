@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b1220" />
+  <title>{% block title %}Thumbnail Studio{% endblock %} — Pro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  {# Inlined on the server so styling never depends on a separate /static request (fixes “UI unchanged” when static is blocked or mis-pathed). #}
+  <style id="ts-embedded-ui" data-version="{{ asset_v }}">{{ embedded_stylesheet|safe }}</style>
+</head>
+<body data-ui-build="{{ asset_v }}" data-ui-mode="embedded-css">
+  {% if not user %}
+  <div class="app-shell app-shell--guest">
+    <aside class="sidebar" id="sidebar" aria-label="Product features">
+      <div class="sidebar-logo">
+        <div class="name">Thumbnail Studio</div>
+        <div class="tag">Create your thumbnail · full toolkit</div>
+      </div>
+      <nav class="sidebar-nav" aria-label="Features">
+        <div class="nav-section-label">No account needed</div>
+        {% for item in nav_items if not item.requires_auth %}
+        <a
+          class="nav-link nav-link--open {% if item.id == active %}active{% endif %}"
+          href="{{ item.url }}"
+        >
+          <span class="dot" aria-hidden="true"></span>
+          {{ item.label }}
+          <span class="nav-access nav-access--open" title="Opens immediately">Open</span>
+        </a>
+        {% endfor %}
+
+        <div class="nav-section-label">Workspace</div>
+        <p class="sidebar-hint">Sign in to use scoring, A/B tests, AI creator, and saved projects.</p>
+        {% for item in nav_items if item.requires_auth %}
+        <a
+          class="nav-link nav-link--locked {% if item.id == active %}active{% endif %}"
+          href="{{ item.url }}"
+        >
+          <span class="dot" aria-hidden="true"></span>
+          {{ item.label }}
+          <span class="nav-access nav-access--lock" title="Requires sign-in" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <rect x="5" y="11" width="14" height="10" rx="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </span>
+        </a>
+        {% endfor %}
+      </nav>
+      <div class="sidebar-footer sidebar-footer--guest">
+        Pick a tool on the left — the workspace opens here after you sign in.
+      </div>
+    </aside>
+
+    <div class="main-wrap">
+      <header class="topbar topbar--guest">
+        <div class="topbar-leading">
+          <span class="topbar-mark" aria-hidden="true">TS</span>
+          <div class="topbar-titles">
+            <span class="topbar-kicker">Welcome</span>
+            <span class="topbar-page">Sign in to unlock the workspace</span>
+          </div>
+        </div>
+        <div class="topbar-trail topbar-trail--guest">
+          <a class="ts-btn ts-btn--ghost ts-btn--sm" href="#guest-auth">Account</a>
+        </div>
+      </header>
+
+      <nav class="mobile-chips mobile-chips--guest" aria-label="All features">
+        {% for item in nav_items %}
+        <a href="{{ item.url }}" class="chip{% if item.id == active %} active{% endif %}{% if item.requires_auth %} chip--locked{% endif %}">{{ item.label }}</a>
+        {% endfor %}
+      </nav>
+
+      <main class="main-inner main-inner--guest" id="guest-auth">
+        {% if error %}<div class="ts-alert ts-alert--error">{{ error }}</div>{% endif %}
+        {% if success %}<div class="ts-alert ts-alert--success">{{ success }}</div>{% endif %}
+        {% if auth_next %}
+        <div class="ts-alert ts-alert--neutral">
+          Sign in or create an account to continue to this tool. After authentication you will be redirected automatically.
+        </div>
+        {% endif %}
+
+        <div class="guest-hero">
+          <h1 class="guest-hero-title">Everything in one sidebar</h1>
+          <p class="guest-hero-lead">
+            Open <strong>Create your thumbnail</strong> anytime (text, backgrounds, and draggable photo layers on the canvas). For model scoring, A/B comparison, AI Creator, ideas, and reports,
+            sign in — your session stays in the browser.
+          </p>
+        </div>
+
+        <div class="guest-auth-grid">
+          <div class="auth-card auth-card--elevated">
+            <h2>Sign in</h2>
+            <p class="subtitle">Welcome back. Use your workspace email.</p>
+            <form method="post" action="{{ url_for('login') }}">
+              {% if auth_next %}<input type="hidden" name="next" value="{{ auth_next }}" />{% endif %}
+              <label class="ts-label" for="login-email">Email</label>
+              <input class="ts-input" id="login-email" name="email" type="email" autocomplete="username" required placeholder="you@example.com" />
+              <label class="ts-label" for="login-pass">Password</label>
+              <input class="ts-input" id="login-pass" name="password" type="password" autocomplete="current-password" required placeholder="••••••••" />
+              <button class="ts-btn ts-btn--primary" type="submit" style="width:100%">Sign in</button>
+            </form>
+            {% if google_ready %}
+            <form method="get" action="{{ url_for('google_login') }}{% if auth_next %}?next={{ auth_next | urlencode }}{% endif %}">
+              <button class="ts-btn ts-btn--google" type="submit">Continue with Google</button>
+            </form>
+            {% endif %}
+          </div>
+
+          <div class="auth-card">
+            <h2>Create account</h2>
+            <p class="subtitle">New here? Register in seconds.</p>
+            <form method="post" action="{{ url_for('signup') }}">
+              {% if auth_next %}<input type="hidden" name="next" value="{{ auth_next }}" />{% endif %}
+              <label class="ts-label" for="su-email">Email</label>
+              <input class="ts-input" id="su-email" name="email" type="email" autocomplete="email" required placeholder="you@example.com" />
+              <label class="ts-label" for="su-pass">Password</label>
+              <input class="ts-input" id="su-pass" name="password" type="password" autocomplete="new-password" required placeholder="Choose a strong password" />
+              <button class="ts-btn ts-btn--secondary" type="submit" style="width:100%">Create account</button>
+            </form>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  {% else %}
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="name">Thumbnail Studio</div>
+        <div class="tag">Create your thumbnail · workspace</div>
+      </div>
+      <nav class="sidebar-nav" aria-label="Main">
+        <div class="nav-section-label">No account needed</div>
+        {% for item in nav_items if not item.requires_auth %}
+        <a class="nav-link nav-link--open {{ 'active' if item.id == active else '' }}" href="{{ item.url }}">
+          <span class="dot" aria-hidden="true"></span>
+          {{ item.label }}
+        </a>
+        {% endfor %}
+        <div class="nav-section-label">Workspace</div>
+        {% for item in nav_items if item.requires_auth %}
+        <a class="nav-link {{ 'active' if item.id == active else '' }}" href="{{ item.url }}">
+          <span class="dot" aria-hidden="true"></span>
+          {{ item.label }}
+        </a>
+        {% endfor %}
+      </nav>
+      <div class="sidebar-footer">
+        Signed in securely · <a href="{{ url_for('logout') }}" style="color:#a5b4fc">Sign out</a>
+      </div>
+    </aside>
+
+    <div class="main-wrap">
+      <header class="topbar">
+        <div class="topbar-leading">
+          <span class="topbar-mark" aria-hidden="true">TS</span>
+          <div class="topbar-titles">
+            <span class="topbar-kicker">Thumbnail Studio</span>
+            <span class="topbar-page">
+              {% if active == 'dashboard' %}Overview
+              {% elif active == 'studio' %}Create your thumbnail
+              {% elif active == 'ab' %}A/B tester
+              {% elif active == 'rater' %}Rater
+              {% elif active == 'creator' %}AI creator
+              {% elif active == 'ideas' %}Ideas
+              {% elif active == 'downloader' %}Downloader
+              {% elif active == 'projects' %}Projects
+              {% elif active == 'reports' %}Reports
+              {% else %}{{ active|replace('_', ' ')|title }}{% endif %}
+            </span>
+          </div>
+        </div>
+        <div class="topbar-trail">
+          <div class="topbar-user">
+            <span class="avatar" aria-hidden="true">{{ (user[0] or '?')|upper }}</span>
+            <span class="topbar-email">Signed in as <strong>{{ user }}</strong></span>
+          </div>
+          <div class="topbar-actions">
+            <a class="ts-btn ts-btn--secondary ts-btn--sm" href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a class="ts-btn ts-btn--ghost ts-btn--sm" href="{{ url_for('logout') }}">Sign out</a>
+          </div>
+        </div>
+      </header>
+
+      <nav class="mobile-chips" aria-label="Features">
+        {% for item in nav_items %}
+        <a href="{{ item.url }}" class="chip{% if item.id == active %} active{% endif %}">{{ item.label }}</a>
+        {% endfor %}
+      </nav>
+
+      <main class="main-inner">
+        {% if error %}<div class="ts-alert ts-alert--error">{{ error }}</div>{% endif %}
+        {% if success %}<div class="ts-alert ts-alert--success">{{ success }}</div>{% endif %}
+
+        {% if active == "dashboard" %}
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-desc">Pick a tool from the sidebar or below. Everything runs in your browser session.</p>
+        <div class="tool-grid">
+          <a class="tool-tile tool-tile--link" href="{{ url_for('thumbnail_studio') }}">
+            <h4>Create your thumbnail</h4>
+            <p>Manual 16:9 canvas: text, fonts, gradients, and one uploaded background image — live preview and PNG export.</p>
+          </a>
+          <a class="tool-tile tool-tile--link" href="{{ url_for('feature_page', name='creator') }}">
+            <h4>AI Creator</h4><p>Photo-backed or abstract layouts with your headline.</p>
+          </a>
+          <a class="tool-tile tool-tile--link" href="{{ url_for('feature_page', name='ab') }}">
+            <h4>A/B Tester</h4><p>Compare current vs candidate thumbnails with a score.</p>
+          </a>
+          <a class="tool-tile tool-tile--link" href="{{ url_for('feature_page', name='rater') }}">
+            <h4>Rater</h4><p>Instant score and verdict on a single upload.</p>
+          </a>
+          <a class="tool-tile tool-tile--link" href="{{ url_for('feature_page', name='rater') }}">
+            <h4>Previewer</h4><p>Live image preview when you choose files in Rater or A/B — open Rater or A/B Tester.</p>
+          </a>
+          <a class="tool-tile tool-tile--link" href="{{ url_for('feature_page', name='ideas') }}">
+            <h4>Ideas</h4><p>Title hooks from a topic line.</p>
+          </a>
+          <a class="tool-tile tool-tile--link" href="{{ url_for('feature_page', name='downloader') }}">
+            <h4>Downloader</h4><p>Pull an image from a URL into your project folder.</p>
+          </a>
+          <a class="tool-tile tool-tile--link" href="{{ url_for('feature_page', name='projects') }}">
+            <h4>Projects</h4><p>Workspaces and batches stored in your local database.</p>
+          </a>
+          <a class="tool-tile tool-tile--link" href="{{ url_for('feature_page', name='reports') }}">
+            <h4>Reports</h4><p>Export recent rater and A/B activity from this session.</p>
+          </a>
+        </div>
+        {% endif %}
+
+        {{ content|safe }}
+
+        {% if history %}
+        <div class="ts-card" style="margin-top:1.5rem">
+          <h3>Recent activity</h3>
+          <p class="lead" style="margin-bottom:0.75rem">Latest runs in this session.</p>
+          {% for item in history %}
+          <div class="history-row"><span>{{ item.label }}</span><strong>{{ item.score }}%</strong></div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </main>
+    </div>
+  </div>
+  {% endif %}
+
+  <script>
+    (function () {
+      function wirePreview(inputId, imgId) {
+        var input = document.getElementById(inputId);
+        var img = document.getElementById(imgId);
+        if (!input || !img) return;
+        input.addEventListener("change", function () {
+          var file = input.files && input.files[0];
+          if (!file) return;
+          img.src = URL.createObjectURL(file);
+          img.style.display = "block";
+        });
+      }
+      wirePreview("predict-file", "predict-preview");
+      wirePreview("current-file", "current-preview");
+      wirePreview("candidate-file", "candidate-preview");
+    })();
+  </script>
+</body>
+</html>

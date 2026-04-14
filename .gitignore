@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Local secrets & data
+.env
+app.db
+*.log
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/launch.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project artifacts (keep structure; ignore heavy local outputs if needed)
+# data/raw/thumbnails/
+# artifacts/*.joblib

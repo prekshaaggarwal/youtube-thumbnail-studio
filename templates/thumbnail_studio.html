@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0c0e14" />
+  <title>Create your thumbnail — Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700&family=Oswald:wght@500;600;700&family=Poppins:wght@500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <style id="tsg-embedded-css" data-v="{{ asset_v }}">{{ studio_css|safe }}</style>
+</head>
+<body class="tsg-body">
+  <noscript>
+    <div style="margin:1rem;padding:1rem;background:#450a0a;color:#fecaca;border-radius:12px;text-align:center;font-family:system-ui,sans-serif">
+      JavaScript is required for Create your thumbnail.
+    </div>
+  </noscript>
+  <a class="skip-link" href="#tsg-main">Skip to main content</a>
+
+  <header class="tsg-nav" role="banner">
+    <a class="tsg-nav-brand" href="{{ url_for('thumbnail_studio') }}" aria-label="Create your thumbnail home">
+      <span class="tsg-nav-logo" aria-hidden="true">▶</span>
+      <span class="tsg-nav-titles">
+        <span class="tsg-nav-title">Create your thumbnail</span>
+        <span class="tsg-nav-sub">Text + draggable pictures · 16:9 export · More in workspace →</span>
+      </span>
+    </a>
+    <div class="tsg-nav-actions">
+      <button
+        type="button"
+        class="tsg-icon-btn"
+        id="tsg-theme-toggle"
+        data-tooltip="Toggle light / dark"
+      >
+        ☀️
+      </button>
+      {% if user %}
+      <a class="tsg-link" href="{{ url_for('dashboard') }}">← Workspace</a>
+      <span class="tsg-sr-only">Signed in as {{ user }}</span>
+      {% else %}
+      <a class="tsg-link" href="{{ url_for('home') }}">Sign in for scoring &amp; A/B</a>
+      {% endif %}
+    </div>
+  </header>
+
+  <div class="tsg-workspace-bar">
+    <div class="tsg-workspace-bar-inner">
+      <span class="tsg-workspace-badge">Thumbnail Studio — full workspace</span>
+      <p class="tsg-workspace-intro">
+        <strong>This screen</strong> is the <em>manual</em> PNG composer (text, colors, and one uploaded background image).
+        <strong>ML scoring</strong> (rate one thumbnail), <strong>A/B compare</strong> (current vs candidate),
+        <strong>AI Creator</strong> (Commons / Picsum), title ideas, downloads, projects, and reports are in the
+        main app — open the links below after you sign in.
+      </p>
+      {% if user %}
+      <nav class="tsg-workspace-links" aria-label="All workspace tools">
+        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('feature_page', name='rater') }}">Rater (score)</a>
+        <a href="{{ url_for('feature_page', name='ab') }}">A/B tester</a>
+        <a href="{{ url_for('feature_page', name='creator') }}">AI Creator</a>
+        <a href="{{ url_for('feature_page', name='ideas') }}">Ideas</a>
+        <a href="{{ url_for('feature_page', name='downloader') }}">Downloader</a>
+        <a href="{{ url_for('feature_page', name='projects') }}">Projects</a>
+        <a href="{{ url_for('feature_page', name='reports') }}">Reports</a>
+      </nav>
+      {% else %}
+      <div class="tsg-workspace-cta">
+        <a class="tsg-btn tsg-btn--secondary" href="{{ url_for('home') }}">Sign in or create account — then use Rater, A/B, and the rest</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <main id="tsg-main" class="tsg-main" role="main">
+    <div class="tsg-grid">
+      <div class="tsg-controls-col" aria-label="Thumbnail controls">
+        <section class="tsg-panel" aria-labelledby="tsg-presets-h">
+          <h2 class="tsg-panel-title" id="tsg-presets-h">Templates</h2>
+          <p class="tsg-label" style="margin-top: -0.5rem; margin-bottom: 0.65rem">Quick-start looks — tweak after applying.</p>
+          <div class="tsg-presets" role="group" aria-label="Preset templates">
+            <button type="button" class="tsg-preset" data-preset="gaming" data-tooltip="High-energy purple / magenta">Gaming</button>
+            <button type="button" class="tsg-preset" data-preset="tech" data-tooltip="Dark minimal tech">Tech</button>
+            <button type="button" class="tsg-preset" data-preset="minimal" data-tooltip="Light, editorial">Minimal</button>
+            <button type="button" class="tsg-preset" data-preset="sunset" data-tooltip="Warm gradient vlog">Sunset</button>
+          </div>
+        </section>
+
+        <section class="tsg-panel" aria-labelledby="tsg-text-h">
+          <h2 class="tsg-panel-title" id="tsg-text-h">Title and typography</h2>
+          <div class="tsg-field">
+            <label class="tsg-label" for="tsg-title">Thumbnail title</label>
+            <input
+              class="tsg-input"
+              id="tsg-title"
+              type="text"
+              maxlength="120"
+              autocomplete="off"
+              placeholder="Hook viewers in a few words"
+            />
+          </div>
+          <div class="tsg-field">
+            <label class="tsg-label" for="tsg-font-family">Font family</label>
+            <select class="tsg-select" id="tsg-font-family" aria-describedby="tsg-font-hint">
+              <option value="Inter">Inter</option>
+              <option value="Poppins">Poppins</option>
+              <option value="Montserrat">Montserrat</option>
+              <option value="Oswald">Oswald</option>
+              <option value="Bebas Neue">Bebas Neue</option>
+            </select>
+            <span class="tsg-sr-only" id="tsg-font-hint">Google Fonts loaded for canvas rendering</span>
+          </div>
+          <div class="tsg-field">
+            <label class="tsg-label" for="tsg-font-size">Font size <span id="tsg-font-size-val" class="tsg-range-val">64px</span></label>
+            <div class="tsg-range-wrap">
+              <input class="tsg-range" id="tsg-font-size" type="range" min="24" max="140" value="64" step="2" aria-valuemin="24" aria-valuemax="140" />
+            </div>
+          </div>
+          <div class="tsg-field">
+            <span class="tsg-label" id="tsg-style-label">Style</span>
+            <div class="tsg-row" role="group" aria-labelledby="tsg-style-label">
+              <div class="tsg-toggle" role="presentation">
+                <button type="button" id="tsg-bold" aria-pressed="true" aria-label="Bold text">Bold</button>
+                <button type="button" id="tsg-italic" aria-pressed="false" aria-label="Italic text">Italic</button>
+              </div>
+            </div>
+          </div>
+          <div class="tsg-field">
+            <label class="tsg-label" for="tsg-text-color">Text color</label>
+            <input class="tsg-input" id="tsg-text-color" type="color" value="#ffffff" aria-label="Pick text color" />
+          </div>
+        </section>
+
+        <section class="tsg-panel" aria-labelledby="tsg-bg-h">
+          <h2 class="tsg-panel-title" id="tsg-bg-h">Background</h2>
+          <div class="tsg-field">
+            <label class="tsg-label" for="tsg-bg-type">Background type</label>
+            <select class="tsg-select" id="tsg-bg-type">
+              <option value="gradient">Gradient</option>
+              <option value="solid">Solid color</option>
+              <option value="image">Image (upload)</option>
+            </select>
+          </div>
+          <div class="tsg-field" id="tsg-panel-solid" hidden>
+            <label class="tsg-label" for="tsg-solid-color">Solid color</label>
+            <input class="tsg-input" id="tsg-solid-color" type="color" value="#0f172a" />
+          </div>
+          <div class="tsg-field" id="tsg-panel-gradient">
+            <label class="tsg-label" for="tsg-grad-start">Gradient start</label>
+            <input class="tsg-input" id="tsg-grad-start" type="color" value="#4f46e5" />
+            <label class="tsg-label" for="tsg-grad-end" style="margin-top: 0.75rem">Gradient end</label>
+            <input class="tsg-input" id="tsg-grad-end" type="color" value="#db2777" />
+            <label class="tsg-label" for="tsg-grad-angle" style="margin-top: 0.75rem">Angle <span id="tsg-grad-angle-val" class="tsg-range-val">135°</span></label>
+            <div class="tsg-range-wrap">
+              <input class="tsg-range" id="tsg-grad-angle" type="range" min="0" max="360" value="135" />
+            </div>
+          </div>
+          <div class="tsg-field" id="tsg-panel-image" hidden>
+            <span class="tsg-label" id="tsg-drop-label">Drop image or browse</span>
+            <label class="tsg-drop" id="tsg-drop-bg" tabindex="0" aria-labelledby="tsg-drop-label">
+              <input
+                id="tsg-file-bg"
+                class="tsg-file-native"
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                aria-label="Upload background image"
+              />
+              <span class="tsg-drop-inner">
+                <strong>Drag & drop here</strong>
+                <span>PNG, JPG, WebP · cover-crop to 16:9</span>
+              </span>
+            </label>
+          </div>
+        </section>
+
+        <section class="tsg-panel" aria-labelledby="tsg-pictures-h">
+          <h2 class="tsg-panel-title" id="tsg-pictures-h">Background image</h2>
+          <p class="tsg-label" style="margin-top: -0.5rem; margin-bottom: 0.65rem; line-height: 1.45">
+            Choose one image (PNG / JPG / WebP). It will be applied as the thumbnail background using 16:9 cover crop.
+            Uploading a new image replaces the previous background.
+          </p>
+          <p class="tsg-layer-count" id="tsg-layer-count">No background image selected yet.</p>
+          <div class="tsg-field">
+            <label class="tsg-label" id="tsg-layer-drop-label" for="tsg-file-layer">Choose background image</label>
+            <input
+              id="tsg-file-layer"
+              class="tsg-input"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/*"
+              onchange="window.__tsgApplyBackgroundFromInput && window.__tsgApplyBackgroundFromInput(this)"
+              aria-label="Upload background image"
+            />
+            <span class="tsg-upload-note">Tip: choose one file. It applies immediately and replaces the previous background.</span>
+            <span class="tsg-upload-note" id="tsg-bg-status" aria-live="polite">Background status: using gradient/solid colors.</span>
+            <span class="tsg-upload-note">Studio build: {{ asset_v }}</span>
+          </div>
+          <div class="tsg-layer-controls" id="tsg-layer-controls" hidden></div>
+        </section>
+
+        <section class="tsg-panel" aria-labelledby="tsg-actions-h">
+          <h2 class="tsg-panel-title" id="tsg-actions-h">Export</h2>
+          <div class="tsg-actions">
+            <button
+              type="button"
+              class="tsg-btn tsg-btn--primary"
+              id="tsg-generate"
+              onclick="window.__tsgForceGenerate && window.__tsgForceGenerate()"
+              data-tooltip="Re-render canvas at full resolution"
+            >
+              Generate thumbnail
+            </button>
+            <button
+              type="button"
+              class="tsg-btn tsg-btn--secondary"
+              id="tsg-download"
+              data-tooltip="Save PNG (1280×720)"
+            >
+              Download thumbnail
+            </button>
+            <button type="button" class="tsg-btn tsg-btn--ghost" id="tsg-reset" data-tooltip="Restore defaults">Reset</button>
+          </div>
+        </section>
+      </div>
+
+      <div class="tsg-preview-col">
+        <p class="tsg-preview-hint" id="tsg-preview-hint">
+          <strong>Tip:</strong> Drag the title on the preview to move it. Background images are auto cover-cropped to 16:9. Export is 1280×720 (YouTube 16:9).
+        </p>
+        <div class="tsg-preview-shell" role="region" aria-label="Thumbnail preview" aria-describedby="tsg-preview-hint">
+          <canvas id="tsg-canvas" width="1280" height="720" aria-label="Live thumbnail preview, sixteen by nine"></canvas>
+          <div class="tsg-loading" id="tsg-loading" aria-hidden="true">
+            <div class="tsg-spinner" role="status" aria-live="polite"></div>
+            <span class="tsg-sr-only">Rendering thumbnail</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="tsg-footer" role="contentinfo">
+    <div class="tsg-footer-links">
+      <a href="https://www.youtube.com/howyoutubeworks/product-features/thumbnails/" rel="noopener noreferrer" target="_blank">YouTube thumbnail tips</a>
+      {% if user %}
+      <a href="{{ url_for('dashboard') }}">Back to workspace</a>
+      {% else %}
+      <a href="{{ url_for('home') }}">Sign in for full workspace</a>
+      {% endif %}
+    </div>
+    <p>Built with Flask · Canvas 2D · Google Fonts. Processing runs in your browser; nothing is uploaded when you use this page.</p>
+  </footer>
+
+  <div class="tsg-toast-host" id="tsg-toast-host" aria-live="polite"></div>
+
+  <script>
+    (function () {
+      // Always load the latest runtime from /static to avoid stale in-memory embedded JS.
+      var script = document.createElement("script");
+      script.id = "tsg-runtime-js";
+      script.src = "{{ url_for('static', filename='js/thumbnail-studio.js') }}?ts=" + Date.now();
+      script.onerror = function () {
+        var p = document.createElement("p");
+        p.setAttribute("role", "alert");
+        p.style.margin = "1rem";
+        p.style.padding = "1rem";
+        p.style.background = "#7f1d1d";
+        p.style.color = "#fff";
+        p.style.fontFamily = "system-ui,sans-serif";
+        p.style.borderRadius = "12px";
+        p.textContent = "Could not load thumbnail editor runtime from /static/js/thumbnail-studio.js.";
+        document.body.appendChild(p);
+      };
+      document.body.appendChild(script);
+    })();
+  </script>
+</body>
+</html>
