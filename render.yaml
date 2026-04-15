@@ -5,7 +5,8 @@ services:
     plan: free
     autoDeploy: true
     buildCommand: pip install -r requirements.txt
-    startCommand: APP_HOST=0.0.0.0 APP_PORT=$PORT python app.py
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120
+    healthCheckPath: /health
     envVars:
       - key: APP_SECRET
         generateValue: true

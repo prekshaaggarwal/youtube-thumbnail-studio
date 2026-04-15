@@ -7,4 +7,5 @@ Pillow
 tqdm
 joblib
 Flask
+gunicorn
 python-dotenv

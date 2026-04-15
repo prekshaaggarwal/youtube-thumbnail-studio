@@ -106,8 +106,9 @@ This repo now includes `render.yaml`, so you can deploy directly from GitHub wit
 
 What happens on deploy:
 - Install dependencies from `requirements.txt`
-- Start Flask with cloud-safe host/port using:
-  - `APP_HOST=0.0.0.0 APP_PORT=$PORT python app.py`
+- Run production server with:
+  - `gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120`
+- Health checks hit `/health`
 - Auto-redeploy on every push to `main`
 
 Optional environment variables on Render:
