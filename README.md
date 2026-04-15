@@ -45,6 +45,33 @@ If you see `ERR_CONNECTION_REFUSED`, the Flask process is not running—keep the
 
 ---
 
+## Open the website from this repo
+
+### Fastest way (Windows)
+
+1. Download or clone this repo.
+2. Double-click `start.bat` (or run `run-local.bat` in terminal).
+3. Open the URL printed in the terminal, usually:
+   - `http://127.0.0.1:8080/` (main app)
+   - `http://127.0.0.1:8080/studio` (thumbnail editor page)
+
+### Manual way (any OS)
+
+```bash
+python -m venv .venv
+# Windows:
+.venv\Scripts\activate
+# macOS/Linux:
+# source .venv/bin/activate
+
+pip install -r requirements.txt
+python app.py
+```
+
+Then open `http://127.0.0.1:8080/` in your browser.
+
+---
+
 ## Screenshots
 
 ### Live demo (GIF)
