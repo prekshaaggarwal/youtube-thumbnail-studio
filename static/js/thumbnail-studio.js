@@ -34,6 +34,7 @@ function defaultState() {
     gradEnd: "#db2777",
     gradAngle: 135,
     bgImage: null,
+    bgImageSrc: null,
     /** @type {{ id: string, img: HTMLImageElement, x: number, y: number, w: number, h: number }[]} */
     pictureLayers: [],
     selectedLayerId: null,
@@ -97,6 +98,8 @@ const PRESETS = {
 };
 
 let state = defaultState();
+const DRAFT_KEY = "tsg-draft-v1";
+const HISTORY_LIMIT = 80;
 
 let dragMode = "none";
 let dragLayerId = null;
@@ -452,6 +455,46 @@ function loadImageFile(file) {
   });
 }
 
+function loadImageFromSrc(src) {
+  return new Promise((resolve, reject) => {
+    if (!src) {
+      resolve(null);
+      return;
+    }
+    const img = new Image();
+    img.decoding = "async";
+    img.onload = async () => {
+      if (typeof img.decode === "function") {
+        await img.decode().catch(() => {});
+      }
+      resolve(img);
+    };
+    img.onerror = () => reject(new Error("Could not restore saved background image."));
+    img.src = src;
+  });
+}
+
+function serializableState(source) {
+  return {
+    title: source.title,
+    fontSize: source.fontSize,
+    fontFamily: source.fontFamily,
+    color: source.color,
+    bold: source.bold,
+    italic: source.italic,
+    textStroke: source.textStroke,
+    bgType: source.bgType,
+    solidColor: source.solidColor,
+    gradStart: source.gradStart,
+    gradEnd: source.gradEnd,
+    gradAngle: source.gradAngle,
+    bgImageSrc: source.bgImageSrc || null,
+    textX: source.textX,
+    textY: source.textY,
+    maxTextWidthRatio: source.maxTextWidthRatio,
+  };
+}
+
 async function applyBackgroundFile(file, els) {
   if (!file) return false;
   if (els.bgStatus) {
@@ -462,6 +505,7 @@ async function applyBackgroundFile(file, els) {
   try {
     const img = await loadImageFile(file);
     state.bgImage = img;
+    state.bgImageSrc = typeof img.src === "string" ? img.src : null;
     state.bgType = "image";
     state.pictureLayers = [];
     state.selectedLayerId = null;
@@ -618,6 +662,11 @@ function initThumbnailStudio() {
     btnGenerate: document.getElementById("tsg-generate"),
     btnDownload: document.getElementById("tsg-download"),
     btnReset: document.getElementById("tsg-reset"),
+    btnUndo: document.getElementById("tsg-undo"),
+    btnRedo: document.getElementById("tsg-redo"),
+    btnSaveDraft: document.getElementById("tsg-save-draft"),
+    btnClearDraft: document.getElementById("tsg-clear-draft"),
+    draftStatus: document.getElementById("tsg-draft-status"),
     loading: document.getElementById("tsg-loading"),
     toastHost: document.getElementById("tsg-toast-host"),
     themeToggle: document.getElementById("tsg-theme-toggle"),
@@ -664,16 +713,99 @@ function initThumbnailStudio() {
   };
   scheduleRenderFn = scheduleRender;
 
-  afterFontsReady(() => {
-    render();
-  });
+  let autosaveTimer = null;
+  const undoStack = [];
+  const redoStack = [];
+  let historyMuted = false;
+
+  const setDraftStatus = (message, tone = "muted") => {
+    if (!els.draftStatus) return;
+    els.draftStatus.textContent = message;
+    const colorMap = {
+      success: "var(--tsg-success)",
+      error: "var(--tsg-danger)",
+      muted: "var(--tsg-muted)",
+      info: "var(--tsg-text)",
+    };
+    els.draftStatus.style.color = colorMap[tone] || colorMap.muted;
+  };
+
+  const updateUndoRedoButtons = () => {
+    if (els.btnUndo) els.btnUndo.disabled = undoStack.length <= 1;
+    if (els.btnRedo) els.btnRedo.disabled = redoStack.length === 0;
+  };
+
+  const saveDraftNow = () => {
+    const snapshot = serializableState(state);
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(snapshot));
+    setDraftStatus(`Draft status: saved at ${new Date().toLocaleTimeString()}.`, "success");
+  };
+
+  const scheduleAutosave = () => {
+    if (autosaveTimer) clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(() => {
+      try {
+        saveDraftNow();
+      } catch (err) {
+        console.error(err);
+        setDraftStatus("Draft status: could not autosave this change.", "error");
+      }
+    }, 900);
+  };
+
+  const restoreFromSnapshot = async (snapshot) => {
+    state = { ...defaultState(), ...snapshot };
+    state.bgImage = null;
+    if (state.bgImageSrc) {
+      state.bgImage = await loadImageFromSrc(state.bgImageSrc).catch(() => null);
+    }
+    state.pictureLayers = [];
+    state.selectedLayerId = null;
+    syncFormFromState(els);
+    updateLayerPanel(els);
+    afterFontsReady(scheduleRender);
+  };
+
+  const pushHistory = () => {
+    if (historyMuted) return;
+    const next = serializableState(state);
+    const previous = undoStack[undoStack.length - 1];
+    if (previous && JSON.stringify(previous) === JSON.stringify(next)) return;
+    undoStack.push(next);
+    if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
+    redoStack.length = 0;
+    updateUndoRedoButtons();
+  };
+
+  const bootDraft = localStorage.getItem(DRAFT_KEY);
+  if (bootDraft) {
+    try {
+      const parsed = JSON.parse(bootDraft);
+      void restoreFromSnapshot(parsed).then(() => {
+        showToast(els.toastHost, "Restored your last local draft.", "info");
+        pushHistory();
+      });
+    } catch (err) {
+      console.error(err);
+      setDraftStatus("Draft status: saved draft was invalid and was skipped.", "error");
+    }
+  } else {
+    afterFontsReady(() => {
+      render();
+    });
+    pushHistory();
+  }
 
   if (els.fileLayer) {
     els.fileLayer.addEventListener("change", async () => {
       const files = els.fileLayer.files ? Array.from(els.fileLayer.files) : [];
       if (!files.length) return;
       try {
-        await addPictureFiles(files, els);
+        const ok = await addPictureFiles(files, els);
+        if (ok) {
+          pushHistory();
+          scheduleAutosave();
+        }
       } catch (err) {
         console.error(err);
       }
@@ -685,7 +817,12 @@ function initThumbnailStudio() {
     try {
       const files = inputEl && inputEl.files ? Array.from(inputEl.files) : [];
       if (!files.length) return false;
-      return await addPictureFiles(files, els);
+      const ok = await addPictureFiles(files, els);
+      if (ok) {
+        pushHistory();
+        scheduleAutosave();
+      }
+      return ok;
     } catch (err) {
       console.error(err);
       return false;
@@ -746,22 +883,30 @@ function initThumbnailStudio() {
   els.title.addEventListener("input", () => {
     state.title = els.title.value;
     scheduleRender();
+    pushHistory();
+    scheduleAutosave();
   });
 
   els.fontSize.addEventListener("input", () => {
     state.fontSize = Math.max(16, Math.min(160, Number(els.fontSize.value) || 64));
     els.fontSizeVal.textContent = `${state.fontSize}px`;
     scheduleRender();
+    pushHistory();
+    scheduleAutosave();
   });
 
   els.fontFamily.addEventListener("change", () => {
     state.fontFamily = els.fontFamily.value;
     afterFontsReady(scheduleRender);
+    pushHistory();
+    scheduleAutosave();
   });
 
   els.textColor.addEventListener("input", () => {
     state.color = els.textColor.value;
     scheduleRender();
+    pushHistory();
+    scheduleAutosave();
   });
 
   function toggleChip(btn, key) {
@@ -769,6 +914,8 @@ function initThumbnailStudio() {
       state[key] = !state[key];
       btn.setAttribute("aria-pressed", String(state[key]));
       scheduleRender();
+      pushHistory();
+      scheduleAutosave();
     });
   }
   toggleChip(els.bold, "bold");
@@ -778,24 +925,34 @@ function initThumbnailStudio() {
     state.bgType = els.bgType.value;
     toggleBgPanels(els);
     scheduleRender();
+    pushHistory();
+    scheduleAutosave();
   });
 
   els.solidColor.addEventListener("input", () => {
     state.solidColor = els.solidColor.value;
     scheduleRender();
+    pushHistory();
+    scheduleAutosave();
   });
   els.gradStart.addEventListener("input", () => {
     state.gradStart = els.gradStart.value;
     scheduleRender();
+    pushHistory();
+    scheduleAutosave();
   });
   els.gradEnd.addEventListener("input", () => {
     state.gradEnd = els.gradEnd.value;
     scheduleRender();
+    pushHistory();
+    scheduleAutosave();
   });
   els.gradAngle.addEventListener("input", () => {
     state.gradAngle = Number(els.gradAngle.value) || 0;
     els.gradAngleVal.textContent = `${state.gradAngle}°`;
     scheduleRender();
+    pushHistory();
+    scheduleAutosave();
   });
 
   function wireDrop(zone, input, onFile) {
@@ -852,11 +1009,14 @@ function initThumbnailStudio() {
     try {
       const img = await loadImageFile(file);
       state.bgImage = img;
+      state.bgImageSrc = typeof img.src === "string" ? img.src : null;
       state.bgType = "image";
       els.bgType.value = "image";
       toggleBgPanels(els);
       showToast(els.toastHost, "Background image applied.", "success");
       scheduleRender();
+      pushHistory();
+      scheduleAutosave();
     } catch (err) {
       showToast(els.toastHost, err.message, "error");
     }
@@ -869,12 +1029,86 @@ function initThumbnailStudio() {
       if (!fn) return;
       state = fn();
       state.bgImage = null;
+      state.bgImageSrc = null;
       state.pictureLayers = [];
       state.selectedLayerId = null;
       syncFormFromState(els);
       showToast(els.toastHost, `Applied “${btn.textContent.trim()}” preset.`, "success");
       afterFontsReady(scheduleRender);
+      pushHistory();
+      scheduleAutosave();
     });
+  });
+
+  if (els.btnSaveDraft) {
+    els.btnSaveDraft.addEventListener("click", () => {
+      saveDraftNow();
+      showToast(els.toastHost, "Draft saved locally in this browser.", "success");
+    });
+  }
+
+  if (els.btnClearDraft) {
+    els.btnClearDraft.addEventListener("click", () => {
+      localStorage.removeItem(DRAFT_KEY);
+      setDraftStatus("Draft status: local draft cleared.", "info");
+      showToast(els.toastHost, "Saved draft cleared for this browser.", "info");
+    });
+  }
+
+  if (els.btnUndo) {
+    els.btnUndo.addEventListener("click", () => {
+      if (undoStack.length <= 1) return;
+      const current = undoStack.pop();
+      if (current) redoStack.push(current);
+      const target = undoStack[undoStack.length - 1];
+      if (!target) return;
+      historyMuted = true;
+      void restoreFromSnapshot(target).finally(() => {
+        historyMuted = false;
+        updateUndoRedoButtons();
+        scheduleAutosave();
+      });
+    });
+  }
+
+  if (els.btnRedo) {
+    els.btnRedo.addEventListener("click", () => {
+      const target = redoStack.pop();
+      if (!target) return;
+      historyMuted = true;
+      void restoreFromSnapshot(target).finally(() => {
+        historyMuted = false;
+        undoStack.push(target);
+        updateUndoRedoButtons();
+        scheduleAutosave();
+      });
+    });
+  }
+
+  window.addEventListener("keydown", (e) => {
+    const key = e.key.toLowerCase();
+    const mod = e.ctrlKey || e.metaKey;
+    if (!mod) return;
+    if (key === "s") {
+      e.preventDefault();
+      saveDraftNow();
+      showToast(els.toastHost, "Draft saved locally.", "success");
+      return;
+    }
+    if (key === "z" && e.shiftKey) {
+      e.preventDefault();
+      els.btnRedo?.click();
+      return;
+    }
+    if (key === "z") {
+      e.preventDefault();
+      els.btnUndo?.click();
+      return;
+    }
+    if (key === "y") {
+      e.preventDefault();
+      els.btnRedo?.click();
+    }
   });
 
   function updateHoverCursor(clientX, clientY) {
@@ -983,12 +1217,17 @@ function initThumbnailStudio() {
   }
 
   function endDrag() {
+    const wasDragging = dragMode !== "none";
     dragMode = "none";
     dragLayerId = null;
     moveStart = null;
     resizeAnchor = null;
     canvas.classList.remove("tsg-dragging");
     canvas.style.cursor = "";
+    if (wasDragging) {
+      pushHistory();
+      scheduleAutosave();
+    }
   }
 
   canvas.addEventListener("mousedown", (e) => {
@@ -1038,7 +1277,11 @@ function initThumbnailStudio() {
     }
     if (fileInputNow && fileInputNow.files && fileInputNow.files[0]) {
       try {
-        await applyBackgroundFile(fileInputNow.files[0], els);
+        const ok = await applyBackgroundFile(fileInputNow.files[0], els);
+        if (ok) {
+          pushHistory();
+          scheduleAutosave();
+        }
       } catch (err) {
         console.error(err);
       }
@@ -1063,7 +1306,11 @@ function initThumbnailStudio() {
     const fileInputNow = /** @type {HTMLInputElement|null} */ (document.getElementById("tsg-file-layer"));
     if (fileInputNow && fileInputNow.files && fileInputNow.files[0]) {
       try {
-        await applyBackgroundFile(fileInputNow.files[0], els);
+        const ok = await applyBackgroundFile(fileInputNow.files[0], els);
+        if (ok) {
+          pushHistory();
+          scheduleAutosave();
+        }
       } catch (err) {
         console.error(err);
       }
@@ -1075,7 +1322,11 @@ function initThumbnailStudio() {
       const fileInputNow = /** @type {HTMLInputElement|null} */ (document.getElementById("tsg-file-layer"));
       if (fileInputNow && fileInputNow.files && fileInputNow.files[0]) {
         try {
-          await applyBackgroundFile(fileInputNow.files[0], els);
+          const ok = await applyBackgroundFile(fileInputNow.files[0], els);
+          if (ok) {
+            pushHistory();
+            scheduleAutosave();
+          }
         } catch (err) {
           console.error(err);
         }
@@ -1109,11 +1360,14 @@ function initThumbnailStudio() {
   els.btnReset.addEventListener("click", () => {
     state = defaultState();
     state.bgImage = null;
+    state.bgImageSrc = null;
     state.pictureLayers = [];
     state.selectedLayerId = null;
     syncFormFromState(els);
     showToast(els.toastHost, "Reset to defaults.", "info");
     afterFontsReady(scheduleRender);
+    pushHistory();
+    scheduleAutosave();
   });
 }
 

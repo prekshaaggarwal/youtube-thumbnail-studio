@@ -464,6 +464,33 @@ label.tsg-drop {
   gap: 0.55rem;
 }
 
+.tsg-editor-utils {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 0.7rem;
+}
+
+@media (min-width: 620px) {
+  .tsg-editor-utils {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+#tsg-draft-status {
+  margin: 0 0 0.65rem;
+}
+
+kbd {
+  display: inline-block;
+  padding: 0.05rem 0.38rem;
+  border-radius: 6px;
+  border: 1px solid var(--tsg-border-strong);
+  background: var(--tsg-surface);
+  font-size: 0.74rem;
+  line-height: 1.3;
+}
+
 .tsg-btn {
   display: inline-flex;
   align-items: center;

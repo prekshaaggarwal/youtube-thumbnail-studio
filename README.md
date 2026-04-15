@@ -72,6 +72,52 @@ Then open `http://127.0.0.1:8080/` in your browser.
 
 ---
 
+## Update after deployment
+
+Yes, you can keep changing the project after it is deployed.
+
+1. Make your code changes locally and test:
+   - `python -m pytest tests/ -v`
+2. Commit and push to GitHub:
+   - `git add .`
+   - `git commit -m "your update message"`
+   - `git push`
+3. Your hosting platform redeploys from the latest commit (if auto-deploy is enabled).
+4. Open the same live URL; it now serves your newest version.
+
+Recommended safe flow:
+- Keep `main` as production.
+- Build features on short branches (for example `feature/undo-redo`).
+- Open a PR, let CI pass, then merge.
+- Roll back quickly by redeploying a previous good commit if needed.
+
+---
+
+## Deploy to web link (Render)
+
+This repo now includes `render.yaml`, so you can deploy directly from GitHub with minimal setup.
+
+1. Push latest code to GitHub.
+2. Go to [Render](https://render.com/) and sign in.
+3. Click **New +** -> **Blueprint**.
+4. Select this GitHub repo.
+5. Render detects `render.yaml` and creates the web service automatically.
+6. After build completes, open the generated public URL.
+
+What happens on deploy:
+- Install dependencies from `requirements.txt`
+- Start Flask with cloud-safe host/port using:
+  - `APP_HOST=0.0.0.0 APP_PORT=$PORT python app.py`
+- Auto-redeploy on every push to `main`
+
+Optional environment variables on Render:
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` (only if you want Google login in production)
+- `YOUTUBE_API_KEY` (for live API collection workflows)
+
+If you skip optional variables, the app still runs with email/password auth and local creator tooling.
+
+---
+
 ## Screenshots
 
 ### Live demo (GIF)

@@ -202,6 +202,13 @@
 
         <section class="tsg-panel" aria-labelledby="tsg-actions-h">
           <h2 class="tsg-panel-title" id="tsg-actions-h">Export</h2>
+          <div class="tsg-editor-utils" role="group" aria-label="Editor utilities">
+            <button type="button" class="tsg-btn tsg-btn--secondary tsg-btn--sm" id="tsg-undo" title="Undo (Ctrl/Cmd+Z)">Undo</button>
+            <button type="button" class="tsg-btn tsg-btn--secondary tsg-btn--sm" id="tsg-redo" title="Redo (Ctrl/Cmd+Y)">Redo</button>
+            <button type="button" class="tsg-btn tsg-btn--ghost tsg-btn--sm" id="tsg-save-draft" title="Save draft (Ctrl/Cmd+S)">Save draft</button>
+            <button type="button" class="tsg-btn tsg-btn--ghost tsg-btn--sm" id="tsg-clear-draft" title="Clear locally saved draft">Clear draft</button>
+          </div>
+          <p class="tsg-upload-note" id="tsg-draft-status" aria-live="polite">Draft status: autosave enabled.</p>
           <div class="tsg-actions">
             <button
               type="button"
@@ -227,7 +234,7 @@
 
       <div class="tsg-preview-col">
         <p class="tsg-preview-hint" id="tsg-preview-hint">
-          <strong>Tip:</strong> Drag the title on the preview to move it. Background images are auto cover-cropped to 16:9. Export is 1280×720 (YouTube 16:9).
+          <strong>Tip:</strong> Drag the title on the preview to move it. Background images are auto cover-cropped to 16:9. Shortcuts: Undo <kbd>Ctrl/Cmd+Z</kbd>, Redo <kbd>Ctrl/Cmd+Y</kbd>, Save draft <kbd>Ctrl/Cmd+S</kbd>. Export is 1280×720 (YouTube 16:9).
         </p>
         <div class="tsg-preview-shell" role="region" aria-label="Thumbnail preview" aria-describedby="tsg-preview-hint">
           <canvas id="tsg-canvas" width="1280" height="720" aria-label="Live thumbnail preview, sixteen by nine"></canvas>

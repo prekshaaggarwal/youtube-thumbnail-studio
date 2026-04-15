@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: youtube-thumbnail-studio
+    runtime: python
+    plan: free
+    autoDeploy: true
+    buildCommand: pip install -r requirements.txt
+    startCommand: APP_HOST=0.0.0.0 APP_PORT=$PORT python app.py
+    envVars:
+      - key: APP_SECRET
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: 3.11.9
